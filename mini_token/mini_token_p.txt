@@ -1,0 +1,10 @@
+if a == b
+    print "same"
+
+else a >= b
+    print "a is bigger than b"
+
+else a <= b
+    print "b is bigger than a"
+
+end
