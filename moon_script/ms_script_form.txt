@@ -1,0 +1,56 @@
+
+< Moon-Script Language (MS) >
+
+-----------------------------------------
+
+지원하는 구문들 : if-else, while, for, function
+지원하는 변수 타입 : int, string
+지원하는 연산자 : +, -, *, /, ==, !=, <=, >=
+지원하는 기본 함수 : print, Int, String
+
+-----------------------------------------
+
+기본적인 문법 예시
+
+
+(ex 1)
+variable1 = 1
+variable2 = "1"
+
+function f()
+    print "function"
+end
+
+-----------------------------------------
+
+(ex 2)
+if 1 == 1
+    print "true"
+
+else
+    print "false"
+
+end
+
+-----------------------------------------
+
+(ex 2)
+while 1 == 1
+    print "true"
+end
+
+-----------------------------------------
+
+(ex 3)
+for i 1 to 10
+    print i
+end
+
+for i 10 to 1
+    print i
+end
+
+-----------------------------------------
+
+
+    
