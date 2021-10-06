@@ -62,53 +62,157 @@ int getNextChar() {
     return c;
 }
 
-TokenKind getKind(string str) {
-    if(str == "if") return If;
-    if(str == "else") return Else;
-    if(str == "while") return While;
-    if(str == "for") return For;
-    if(str == "function") return Function;
+// int peekNextChar() {
+//     int c;
+
+//     if((c=fin.peek()) != EOF) fin.close();
+
+//     return c;
+// }
+
+TokenKind getOtherKind(string str) {
+    if(str == "if") // if
+        return If;
+
+    if(str == "else") // else
+        return Else;
+
+    if(str == "while") // while
+        return While;
+
+    if(str == "for") // for
+        return For;
+
+    if(str == "function") // function
+        return Function;
+
+    if(str == "+") // +
+        return Plus;
+
+    if(str == "-") // -
+        return Minus;
+
+    if(str == "*") // *
+        return Multi;
+
+    if(str == "/") // /
+        return Divi;
+
+    if(str == "==") // ==
+        return Equal;
+
+    if(str == "!=") // !=
+        return NotEqual;
+
+    if(str == "<=") // <=
+        return RightEqual;
+
+    if(str == ">=") // >=
+        return LeftEqual;
+
+    return Other;
+}
+
+string getKindName(TokenKind kind) {
+    switch(kind) {
+        case If : // if
+            return "if";
+
+        case Else : // else
+            return "else";
+
+        case While : // while
+            return "while";
+
+        case For : // for
+            return "for";
+
+        case Function : // function
+            return "function";
+
+        case Int : // int
+            return "int";
+
+        case String : // string
+            return "string";
+
+        case Plus : // +
+            return "plus";
+
+        case Minus : // -
+            return "minus";
+
+        case Multi : // *
+            return "multi";
+
+        case Divi : // /
+            return "divi";
+
+        case Equal : // ==
+            return "equal";
+
+        case NotEqual : // !=
+            return "not equal";
+
+        case RightEqual : // <=
+            return "right equal";
+
+        case LeftEqual : // >=
+            return "left equal";
+
+        default :
+            return "other";
+    }
 }
 
 Token getNextToken() {
-    int c = ' ';
+    static int c = getNextChar();
     int num = 0;
     string str = "";
 
     while(isspace(c)) c = getNextChar();
+    
+    // cout << "char : " << (char) c << "\n";
 
     if(c == EOF) {
         return Token(_EOF);
 
     // int
     } else if(isdigit(c)) {
-        while(isdigit(c)) {
-            num = num * 10 + (c - '0');
-            c = getNextChar();
-        }
+        num = c - '0';
+
+        while(isdigit(c=getNextChar())) num = num * 10 + (c - '0');
 
         return Token(Int, num);
 
     // string
     } else if(c == '"') {
-        while(c != '"') {
-            str += c;
-            c = getNextChar();
-        }
+        while((c=getNextChar()) != '"') str += c;
+
+        c = getNextChar();
 
         return Token(String, str);
 
     // varibale | statement
-    } else if(isalpha(c)) {
-        while(isalpha(c)) {
-            str += c;
-            c = getNextChar();
-        }
+    } else {
+        str += c;
+
+        while(!isspace(c=getNextChar()) && !isdigit(c) && c != '"') str += c;
     }
 
-    return Token(getKind(str), str);
+    return Token(getOtherKind(str), str);
 }
 
 int main() {
+    fin.open("ms_script_p.txt");
+
+    if(!fin) exit(1);
+
+    Token token;
+
+    while((token=getNextToken()).token_kind != _EOF) {
+        cout << getKindName(token.token_kind) << "\n";
+    }
+
     return 0;
 }
