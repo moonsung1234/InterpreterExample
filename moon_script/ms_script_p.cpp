@@ -2,10 +2,29 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <map>
 
 using namespace std;
 
 ifstream fin;
+
+union Value {
+    string string_value;
+    int int_value;
+};
+
+vector<Code> codes;
+map<string, Value> memory;
+vector<int> stack;
+
+int pc = 0;
+int stack_index = 0;
+
+Token token;
+
+// default setting variable
+const int LOCAL_SIZE = 10;
 
 enum TokenKind {
     If, // if
@@ -19,11 +38,13 @@ enum TokenKind {
     Minus, // -
     Multi, // *
     Divi, // /
+    Assign, // =
     Equal, // ==
     NotEqual, // !=
     RightEqual, // <=
     LeftEqual, // >=
     Other,
+    Variable,
     _EOF
 };
 
@@ -51,6 +72,23 @@ struct Token {
     Token(TokenKind kind, string value) {
         token_kind = kind;
         string_value = value;
+    }
+};
+
+struct Code {
+    TokenKind kind;
+    string name;
+    Value value;
+    int arguments_length;
+    int end_local_address;
+    int address;
+
+    void setValue(int int_value) {
+        value.int_value = int_value;
+    }
+
+    void setValue(string string_value) {
+        value.string_value = string_value;
     }
 };
 
@@ -97,6 +135,9 @@ TokenKind getOtherKind(string str) {
 
     if(str == "/") // /
         return Divi;
+
+    if(str == "=") // =
+        return Assign;
 
     if(str == "==") // ==
         return Equal;
@@ -147,6 +188,9 @@ string getKindName(TokenKind kind) {
 
         case Divi : // /
             return "divi";
+
+        case Assign :
+            return "assign";
 
         case Equal : // ==
             return "equal";
@@ -203,15 +247,146 @@ Token getNextToken() {
     return Token(getOtherKind(str), str);
 }
 
+int getOrder(TokenKind kind) {
+    switch(kind) {
+        case Multi : case Divi : return 3;
+        case Plus : case Minus : return 2;
+        case Equal : case LeftEqual : case RightEqual : return 1;
+        default : return 0;
+    }
+} 
+
+void operate(TokenKind kind) {
+    int result;
+    int n2 = stack.at(--stack_index);
+    int n1 = stack.at(--stack_index);
+
+    switch(kind) {
+        case Multi :
+            result = n1 * n2;
+
+            break;
+
+        case Divi :
+            result = n1 / n2;
+
+            break;
+
+        case Plus :
+            result = n1 + n2;
+
+            break;
+
+        case Minus :
+            result = n1 - n2;
+
+            break;
+    }
+
+    stack.at(stack_index++) = result;
+}
+
+void factor() {
+    switch(token.token_kind) {
+        case Int : 
+            stack.at(stack_index++) = token.int_value;
+            
+            break;
+
+        case String : 
+            stack.at(stack_index++) = token.string_value;
+
+            break;
+
+        case Other :
+            stack.at(stack_index++) = memory[token.string_value].int_value;
+
+            break;
+    }
+
+    token = getNextToken();
+}
+
+void term(int n) {
+    TokenKind kind;
+
+    if(n == 4) {
+        factor();
+
+        return;
+    }
+
+    term(n + 1);
+
+    if(n == getOrder(token.token_kind)) {
+        kind = token.token_kind;
+        token = getNextToken();
+
+        term(n + 1);
+        operate(kind);
+    }
+}
+
+void setFunction() {
+    Code code;
+    token = getNextToken();
+
+    code.kind = Function;
+    code.name = token.string_name;
+    code.address = pc;
+    code.arguments_length = 0;
+    code.end_local_address = pc + LOCAL_SIZE;
+
+    token = getNextToken(); // (
+
+    while((token=getNextToken()) != ')') {
+        code.arguments_length++;
+    }
+
+    token = getNextToken(); // after )
+    pc += LOCAL_SIZE + 1;
+
+    codes.push_back(code);
+}
+
+void parse() {
+    Code code;
+    
+    // variable
+    if(token.token_kind == Other) {
+        string var_name = token.string_value;
+        token = getNextToken(); // assign
+
+        term(1);
+
+        code.kind = Variable;
+        code.name = var_name;
+        code.setValue(stack.at(--stack_index));
+        code.address = pc++;
+        code.arguments_length = 0;
+        code.end_local_address = 0;
+
+        codes.push_back(code);
+
+    } else if(token.token_kind == Function) {
+        setFunction();
+    }
+}
+
+void execute() {
+    // something code will be here...
+}
+
 int main() {
     fin.open("ms_script_p.txt");
 
     if(!fin) exit(1);
 
-    Token token;
-
-    while((token=getNextToken()).token_kind != _EOF) {
+    while(token.token_kind != _EOF) {
         cout << getKindName(token.token_kind) << "\n";
+
+        parse();
+        execute();
     }
 
     return 0;
